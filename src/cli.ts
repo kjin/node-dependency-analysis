@@ -14,4 +14,4 @@ function main(packageRootDir: string) {
   // Step 3: For each top level dependency build a PackageTree
   // Step 4: Run the analysis on each package in a package tree (Build array of
   // functions to execute from flags passed in) Step 5: Print output to user
-}
+  }
