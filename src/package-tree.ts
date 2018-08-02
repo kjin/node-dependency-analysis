@@ -26,23 +26,11 @@ function getPOIforPackageTree(packageTree: PackageTree): PackageTree {
   // step 2: add POI to PackageTree Object
 }
 
-
 function getPackagePOIList(package: PackageTree): PointOfInterest[] {
   // TODO:
   // calls getPointsOfInterest for each file in package
   throw new Error('not implemented');
 }
-
-// Small example regarding IO modules instead of POI
-
-// function getIOModules(packageTree: PackageTree<null>):
-// PackageTree<IoInformation> {
-//   // todo
-//   throw new Error('not implemented');
-//   // step 1: get I/O modules for current package
-//   // step 2:
-//   const a  = packageTree.dependencies.map(dep => getIOModules(dep));
-// }
 
 // Gets Points of Interest for a single file
 function getPointsOfInterest(
