@@ -1,5 +1,6 @@
 import execa from 'execa';
 import * as fs from 'fs';
+import {join} from 'path';
 import pify from 'pify';
 import * as tmp from 'tmp';
 
@@ -72,7 +73,8 @@ export class TestProject {
                                 dependencies: graph[key].reduce(
                                     (acc, dep) => {
                                       const dependencyDetails = NVT.parse(dep);
-                                      acc[dependencyDetails.name] = `../${dep}`;
+                                      acc[dependencyDetails.name] =
+                                          join('..', dep);
                                       return acc;
                                     },
                                     {} as {
@@ -115,17 +117,17 @@ export class TestProject {
                                  });
                            }).then(async path => {
       await Promise.all(this.packageJsons.map(async pJson => {
-        const dirname = `${path}/${NVT.stringify(pJson)}`;
+        const dirname = join(path, NVT.stringify(pJson));
         await mkdirP(dirname);
         await writeFileP(
-            `${dirname}/package.json`, JSON.stringify(pJson, null, 2));
+            join(dirname, 'package.json'), JSON.stringify(pJson, null, 2));
         await writeFileP(
-            `${dirname}/index.js`,
+            join(dirname, 'index.js'),
             `module.exports = '${pJson.name}@${pJson.version}';`);
       }));
       // main package.json file
       await writeFileP(
-          `${path}/package.json`,
+          join(path, 'package.json'),
           JSON.stringify(
               {
                 name: 'test-project',
@@ -133,6 +135,7 @@ export class TestProject {
                 dependencies: this.topLevelDependencies.reduce(
                     (acc, dep) => {
                       const dependencyDetails = NVT.parse(dep);
+                      // join() eliminates dot here, so use string interp.
                       acc[dependencyDetails.name] = `./${dep}`;
                       return acc;
                     },
