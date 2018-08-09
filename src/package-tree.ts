@@ -1,7 +1,15 @@
-import * as path from 'path';
 
 import {getDynamicEval, getIOModules} from './analysis';
 import {fileInfo, filesInDir, readFile} from './util';
+import * as fs from 'fs';
+import * as path from 'path';
+import pify from 'pify';
+
+export const readFilep = pify(fs.readFile);
+
+export interface ReadFileP {
+  (path: string, encoding: string): Promise<string>;
+}
 
 export interface PointOfInterest {
   type: string;
@@ -23,12 +31,45 @@ export interface PackageTree<T> {
   dependencies: Array<PackageTree<T>>;
 }
 
-export function generatePackageTree(pjson: string):
-    PackageTree<PointOfInterest[]> {
-  throw new Error('not implemented');
-  // compute result
-  //   let result: PackageTree;
-  //   return result;
+/**
+ * Takes in the root directory of a project and returns returns a PackageTree
+ */
+export async function generatePackageTree(
+    rootDir: string,
+    customReadFilep?: ReadFileP): Promise<PackageTree<undefined>> {
+  customReadFilep = customReadFilep || readFilep;
+
+  try {
+    // Step 0: read in package.json and package-lock.json
+    const pjsonPath = path.join(rootDir, 'package.json');
+    const pjson = await customReadFilep(pjsonPath, 'utf8');
+    const packageJson = JSON.parse(pjson);
+
+    const pjsonLockPath = path.join(rootDir, 'package-lock.json');
+    const pjsonLock = await customReadFilep(pjsonLockPath, 'utf8');
+    const packageLockJson = JSON.parse(pjsonLock);
+
+    // Step 1: Get the top level dependencies from pjson
+    const dependencies = {
+      ...packageJson.dependencies,
+      ...packageJson.devDependencies
+    };
+
+    // Step 2: Look at package-lock.json to find dependendencies
+    const result =
+        await getPackageTreeFromDependencyList(dependencies, packageLockJson);
+
+    const treeHead: PackageTree<undefined> = {
+      name: packageJson.name,
+      version: packageJson.version,
+      data: undefined,
+      dependencies: result
+    };
+
+    return treeHead;
+  } catch (error) {
+    throw error;
+  }
 }
 
 /**
@@ -194,4 +235,66 @@ function main() {
   // const packageTreeWithPath = resolvePaths(emptyPackageTree, <CLI INPUT>);
   // const packageTreeWithPOI = populatePOIInPackageTree(packageTreeWithPath);
   throw new Error('not implemented');
+}
+
+/**
+ * Takes in a list of depndencies and returns a constructed PackageTree
+ * @param packageLockJson the package-lock.json file of the root project
+ */
+export async function getPackageTreeFromDependencyList(
+    dependencies: {},
+    packageLockJson: {}): Promise<Array<PackageTree<undefined>>> {
+  // Step 1: For each dependency create a PackageTree obj with the name and
+  // version fields populated
+  if (!dependencies) {
+    return [];
+  }
+
+  const dependencyArr: Array<[string, string]> = Object.entries(dependencies);
+  const packageTreeArr: Array<PackageTree<undefined>> = [];
+
+  dependencyArr.forEach((element: [string, string]) => {
+    const pkgTreeObj: PackageTree<undefined> = {
+      name: element[0],
+      version: element[1],
+      data: undefined,
+      dependencies: []
+    };
+
+    packageTreeArr.push(pkgTreeObj);
+  });
+
+  // Step 2: For each Package Tree obj get the dependencies
+  await Promise.all(packageTreeArr.map(async element => {
+    element.dependencies = await populateDependencies(element, packageLockJson);
+  }));
+  return packageTreeArr.sort(compare);
+}
+
+/**
+ * Takes in a PackageTree and populates its dependency field
+ * Currently using 'any' type for pjsonLock because the types for
+ * package-lock.json have not been written yet
+ */
+async function populateDependencies(
+    pkg: PackageTree<undefined>,
+    // tslint:disable-next-line:no-any
+    packageLockJson: any): Promise<Array<PackageTree<undefined>>> {
+  const packageName = pkg.name;
+  const dependencies = packageLockJson.dependencies[packageName].requires;
+  if (!dependencies) {
+    return [];
+  }
+
+  return await getPackageTreeFromDependencyList(dependencies, packageLockJson);
+}
+
+function compare(a: PackageTree<undefined>, b: PackageTree<undefined>): number {
+  if (a.name < b.name) {
+    return -1;
+  }
+  if (a.name > b.name) {
+    return 1;
+  }
+  return 0;
 }
