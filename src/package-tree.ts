@@ -39,7 +39,6 @@ export async function generatePackageTree(
     customReadFilep?: ReadFileP): Promise<PackageTree<undefined>> {
   customReadFilep = customReadFilep || readFilep;
 
-  try {
     // Step 0: read in package.json and package-lock.json
     const pjsonPath = path.join(rootDir, 'package.json');
     const pjson = await customReadFilep(pjsonPath, 'utf8');
@@ -64,12 +63,9 @@ export async function generatePackageTree(
       version: packageJson.version,
       data: undefined,
       dependencies: result
-    };
+    }
 
     return treeHead;
-  } catch (error) {
-    throw error;
-  }
 }
 
 /**
