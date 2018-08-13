@@ -11,7 +11,7 @@ import {generatePackageTree, getPackageTreeFromDependencyList, PackageTree} from
 import * as tests from './mock-projects';
 
 test(
-    'the data property of the package tree should changed from null ' +
+    'the data property of the package tree should changed from undefined ' +
         'to an array of Points of Interest',
     async t => {
       // See how the dependency graph looks in test-projects
@@ -22,7 +22,7 @@ test(
       const b1 = {name: 'b', version: '1.0.0', data: null, dependencies: [c1]};
       const a1 =
           {name: 'a', version: '1.0.0', data: null, dependencies: [b1, c1]};
-      const root =
+      const root: PackageTree =
           {name: 'root', version: '1.0.0', data: null, dependencies: [a1, c2]};
 
       const resolvedTree: PackageTree<string> =
@@ -92,11 +92,11 @@ test(
         {
           name: 'module1',
           version: 'version1',
-          data: undefined,
+          data: null,
           dependencies: [{
             name: 'module5',
             version: 'version5',
-            data: undefined,
+            data: null,
             dependencies: []
           }]
         },
@@ -104,11 +104,11 @@ test(
         {
           name: 'module2',
           version: 'version2',
-          data: undefined,
+          data: null,
           dependencies: [{
             name: 'module6',
             version: 'version6',
-            data: undefined,
+            data: null,
             dependencies: []
           }]
         }
@@ -150,16 +150,16 @@ test(
       const expectedResult = {
         name: 'testProject',
         version: '1.0.0',
-        data: undefined,
+        data: null,
         dependencies: [
           {
             name: 'module1',
             version: 'version1',
-            data: undefined,
+            data: null,
             dependencies: [{
               name: 'module5',
               version: 'version5',
-              data: undefined,
+              data: null,
               dependencies: []
             }]
           },
@@ -167,11 +167,11 @@ test(
           {
             name: 'module2',
             version: 'version2',
-            data: undefined,
+            data: null,
             dependencies: [{
               name: 'module6',
               version: 'version6',
-              data: undefined,
+              data: null,
               dependencies: []
             }]
           }

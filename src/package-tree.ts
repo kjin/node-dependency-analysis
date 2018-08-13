@@ -25,7 +25,7 @@ export interface Position {
   colEnd: number;
 }
 
-export interface PackageTree<T> {
+export interface PackageTree<T = null> {
   name: string;
   version: string;
   data: T;
@@ -36,8 +36,7 @@ export interface PackageTree<T> {
  * Takes in the root directory of a project and returns returns a PackageTree
  */
 export async function generatePackageTree(
-    rootDir: string,
-    customReadFilep?: ReadFileP): Promise<PackageTree<undefined>> {
+    rootDir: string, customReadFilep?: ReadFileP): Promise<PackageTree> {
   customReadFilep = customReadFilep || readFilep;
 
   // Step 0: read in package.json and package-lock.json
@@ -59,10 +58,10 @@ export async function generatePackageTree(
   const result =
       await getPackageTreeFromDependencyList(dependencies, packageLockJson);
 
-  const treeHead: PackageTree<undefined> = {
+  const treeHead: PackageTree = {
     name: packageJson.name,
     version: packageJson.version,
-    data: undefined,
+    data: null,
     dependencies: result
   };
 
@@ -129,8 +128,7 @@ export async function getPackagePOIList(path: string):
  * @param rootPath the path to the root node
  */
 export async function resolvePaths(
-    rootNode: PackageTree<null>,
-    rootPath: string): Promise<PackageTree<string>> {
+    rootNode: PackageTree, rootPath: string): Promise<PackageTree<string>> {
   const updatedNodesMap = new Map<string, PackageTree<string>>();
   const resolvedNodes: Array<PackageTree<string>> = [];
 
@@ -150,7 +148,7 @@ export async function resolvePaths(
   return updatedRoot;
 
   async function resolvePathsRec(
-      packageNode: PackageTree<null>, parentPath: string,
+      packageNode: PackageTree, parentPath: string,
       updatedNodesMap: Map<string, PackageTree<string>>):
       Promise<PackageTree<string>> {
     const paths: string[] = [];
@@ -225,22 +223,12 @@ function getPointsOfInterest(
   return pointsOfInterest;
 }
 
-function main() {
-  // TODO:
-  // const emptyPackageTree: PackageTree<null> = (TODO: function that creates
-  //                                            package tree with data as null)
-  // const packageTreeWithPath = resolvePaths(emptyPackageTree, <CLI INPUT>);
-  // const packageTreeWithPOI = populatePOIInPackageTree(packageTreeWithPath);
-  throw new Error('not implemented');
-}
-
 /**
  * Takes in a list of depndencies and returns a constructed PackageTree
  * @param packageLockJson the package-lock.json file of the root project
  */
 export async function getPackageTreeFromDependencyList(
-    dependencies: {},
-    packageLockJson: {}): Promise<Array<PackageTree<undefined>>> {
+    dependencies: {}, packageLockJson: {}): Promise<PackageTree[]> {
   // Step 1: For each dependency create a PackageTree obj with the name and
   // version fields populated
   if (!dependencies) {
@@ -248,15 +236,11 @@ export async function getPackageTreeFromDependencyList(
   }
 
   const dependencyArr: Array<[string, string]> = Object.entries(dependencies);
-  const packageTreeArr: Array<PackageTree<undefined>> = [];
+  const packageTreeArr: PackageTree[] = [];
 
   dependencyArr.forEach((element: [string, string]) => {
-    const pkgTreeObj: PackageTree<undefined> = {
-      name: element[0],
-      version: element[1],
-      data: undefined,
-      dependencies: []
-    };
+    const pkgTreeObj: PackageTree =
+        {name: element[0], version: element[1], data: null, dependencies: []};
 
     packageTreeArr.push(pkgTreeObj);
   });
@@ -274,9 +258,9 @@ export async function getPackageTreeFromDependencyList(
  * package-lock.json have not been written yet
  */
 async function populateDependencies(
-    pkg: PackageTree<undefined>,
+    pkg: PackageTree,
     // tslint:disable-next-line:no-any
-    packageLockJson: any): Promise<Array<PackageTree<undefined>>> {
+    packageLockJson: any): Promise<PackageTree[]> {
   const packageName = pkg.name;
   const dependencies = packageLockJson.dependencies[packageName].requires;
   if (!dependencies) {
@@ -286,7 +270,7 @@ async function populateDependencies(
   return await getPackageTreeFromDependencyList(dependencies, packageLockJson);
 }
 
-function compare(a: PackageTree<undefined>, b: PackageTree<undefined>): number {
+function compare(a: PackageTree, b: PackageTree): number {
   if (a.name < b.name) {
     return -1;
   }
