@@ -1,9 +1,10 @@
 
-import {getDynamicEval, getIOModules} from './analysis';
-import {fileInfo, filesInDir, readFile} from './util';
 import * as fs from 'fs';
 import * as path from 'path';
 import pify from 'pify';
+
+import {getDynamicEval, getIOModules} from './analysis';
+import {fileInfo, filesInDir, readFile} from './util';
 
 export const readFilep = pify(fs.readFile);
 
@@ -39,33 +40,33 @@ export async function generatePackageTree(
     customReadFilep?: ReadFileP): Promise<PackageTree<undefined>> {
   customReadFilep = customReadFilep || readFilep;
 
-    // Step 0: read in package.json and package-lock.json
-    const pjsonPath = path.join(rootDir, 'package.json');
-    const pjson = await customReadFilep(pjsonPath, 'utf8');
-    const packageJson = JSON.parse(pjson);
+  // Step 0: read in package.json and package-lock.json
+  const pjsonPath = path.join(rootDir, 'package.json');
+  const pjson = await customReadFilep(pjsonPath, 'utf8');
+  const packageJson = JSON.parse(pjson);
 
-    const pjsonLockPath = path.join(rootDir, 'package-lock.json');
-    const pjsonLock = await customReadFilep(pjsonLockPath, 'utf8');
-    const packageLockJson = JSON.parse(pjsonLock);
+  const pjsonLockPath = path.join(rootDir, 'package-lock.json');
+  const pjsonLock = await customReadFilep(pjsonLockPath, 'utf8');
+  const packageLockJson = JSON.parse(pjsonLock);
 
-    // Step 1: Get the top level dependencies from pjson
-    const dependencies = {
-      ...packageJson.dependencies,
-      ...packageJson.devDependencies
-    };
+  // Step 1: Get the top level dependencies from pjson
+  const dependencies = {
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies
+  };
 
-    // Step 2: Look at package-lock.json to find dependendencies
-    const result =
-        await getPackageTreeFromDependencyList(dependencies, packageLockJson);
+  // Step 2: Look at package-lock.json to find dependendencies
+  const result =
+      await getPackageTreeFromDependencyList(dependencies, packageLockJson);
 
-    const treeHead: PackageTree<undefined> = {
-      name: packageJson.name,
-      version: packageJson.version,
-      data: undefined,
-      dependencies: result
-    }
+  const treeHead: PackageTree<undefined> = {
+    name: packageJson.name,
+    version: packageJson.version,
+    data: undefined,
+    dependencies: result
+  };
 
-    return treeHead;
+  return treeHead;
 }
 
 /**

@@ -6,7 +6,7 @@ import test from 'ava';
 import path from 'path';
 
 import * as tree from '../src/package-tree';
-import {PackageTree, generatePackageTree, getPackageTreeFromDependencyList} from '../src/package-tree';
+import {generatePackageTree, getPackageTreeFromDependencyList, PackageTree} from '../src/package-tree';
 
 import * as tests from './mock-projects';
 
